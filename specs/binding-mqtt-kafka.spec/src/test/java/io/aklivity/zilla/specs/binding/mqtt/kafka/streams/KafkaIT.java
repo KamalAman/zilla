@@ -895,6 +895,16 @@ public class KafkaIT
 
     @Test
     @Specification({
+        "${kafka}/publish.qos2.recovery.fragmented.offsets/client",
+        "${kafka}/publish.qos2.recovery.fragmented.offsets/server"})
+    public void shouldPublishQoS2MessageDuringRecoveryWithFragmentedOffsets() throws Exception
+    {
+        k3po.start();
+        k3po.finish();
+    }
+
+    @Test
+    @Specification({
         "${kafka}/publish.qos2.meta.abort/client",
         "${kafka}/publish.qos2.meta.abort/server"})
     public void shouldSessionReceiveQos2MetaSentAbort() throws Exception

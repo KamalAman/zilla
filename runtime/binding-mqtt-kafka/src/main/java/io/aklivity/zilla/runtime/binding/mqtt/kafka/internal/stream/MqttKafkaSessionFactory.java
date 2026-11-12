@@ -3865,6 +3865,9 @@ public class MqttKafkaSessionFactory implements MqttKafkaStreamFactory
         private int replyMax;
         private int replyPad;
 
+        private int decodeSlot = NO_SLOT;
+        private int decodeSlotOffset;
+
         private KafkaOffsetFetchStream(
             long originId,
             long routedId,
@@ -3953,21 +3956,86 @@ public class MqttKafkaSessionFactory implements MqttKafkaStreamFactory
             assert replyAck <= replySeq;
             if (replySeq > replyAck + replyMax)
             {
+                cleanupDecodeSlot();
                 doKafkaReset(traceId);
                 delegate.doMqttAbort(traceId, authorization);
             }
+            else
+            {
+                onKafkaOffsetsData(traceId, authorization, data.flags(), data.payload());
+            }
+        }
 
-            final OctetsFW payload = data.payload();
+        private void onKafkaOffsetsData(
+            long traceId,
+            long authorization,
+            int flags,
+            OctetsFW payload)
+        {
+            DirectBufferEx buffer = payload != null ? payload.buffer() : null;
+            int offset = payload != null ? payload.offset() : 0;
+            int limit = payload != null ? payload.limit() : 0;
+            final int length = limit - offset;
+
+            if (!hasFin(flags) || decodeSlot != NO_SLOT)
+            {
+                if (decodeSlot == NO_SLOT)
+                {
+                    decodeSlot = bufferPool.acquire(replyId);
+                    assert decodeSlotOffset == 0;
+                }
+
+                if (decodeSlot == NO_SLOT || decodeSlotOffset + length > bufferPool.slotCapacity())
+                {
+                    cleanupDecodeSlot();
+                    doKafkaReset(traceId);
+                    delegate.doMqttAbort(traceId, authorization);
+                    return;
+                }
+
+                final MutableDirectBufferEx slotBuffer = bufferPool.buffer(decodeSlot);
+                if (length > 0)
+                {
+                    slotBuffer.putBytes(decodeSlotOffset, buffer, offset, length);
+                }
+                decodeSlotOffset += length;
+
+                if (!hasFin(flags))
+                {
+                    return;
+                }
+
+                buffer = slotBuffer;
+                offset = 0;
+                limit = decodeSlotOffset;
+            }
 
             List<KafkaOffsetMetadata> entries = List.of();
-            if (payload != null && payload.sizeof() > 0)
+            if (limit > offset)
             {
-                final MqttKafkaSessionOffsetsFW sessionOffsets =
-                    sessionOffsetsRO.wrap(payload.buffer(), payload.offset(), payload.limit());
+                final MqttKafkaSessionOffsetsFW sessionOffsets = sessionOffsetsRO.tryWrap(buffer, offset, limit);
+                if (sessionOffsets == null)
+                {
+                    cleanupDecodeSlot();
+                    doKafkaReset(traceId);
+                    delegate.doMqttAbort(traceId, authorization);
+                    return;
+                }
                 entries = sessionOffsetsHelper.decode(sessionOffsets);
             }
 
+            cleanupDecodeSlot();
             delegate.onOffsetFetched(traceId, authorization, entries, this);
+        }
+
+        private void cleanupDecodeSlot()
+        {
+            if (decodeSlot != NO_SLOT)
+            {
+                bufferPool.release(decodeSlot);
+                decodeSlot = NO_SLOT;
+                decodeSlotOffset = 0;
+            }
         }
 
         private void onKafkaFlush(
@@ -4002,6 +4070,8 @@ public class MqttKafkaSessionFactory implements MqttKafkaStreamFactory
             state = StreamState.closeReply(state);
 
             assert replyAck <= replySeq;
+
+            cleanupDecodeSlot();
         }
 
         private void onKafkaAbort(
@@ -4020,6 +4090,7 @@ public class MqttKafkaSessionFactory implements MqttKafkaStreamFactory
 
             assert replyAck <= replySeq;
 
+            cleanupDecodeSlot();
             delegate.doMqttReset(traceId, EMPTY_OCTETS);
             delegate.doMqttAbort(traceId, authorization);
         }
@@ -4070,6 +4141,7 @@ public class MqttKafkaSessionFactory implements MqttKafkaStreamFactory
             long traceId,
             long authorization)
         {
+            cleanupDecodeSlot();
             if (!StreamState.initialClosed(state))
             {
                 initialSeq = delegate.initialSeq;
@@ -4085,6 +4157,7 @@ public class MqttKafkaSessionFactory implements MqttKafkaStreamFactory
         private void doKafkaReset(
             long traceId)
         {
+            cleanupDecodeSlot();
             if (!StreamState.replyClosed(state))
             {
                 state = StreamState.closeReply(state);

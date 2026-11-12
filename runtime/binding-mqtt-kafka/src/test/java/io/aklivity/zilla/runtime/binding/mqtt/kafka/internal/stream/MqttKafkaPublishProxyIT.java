@@ -382,6 +382,17 @@ public class MqttKafkaPublishProxyIT
     @Configuration("proxy.yaml")
     @Configure(name = WILL_AVAILABLE_NAME, value = "false")
     @Specification({
+        "${mqtt}/publish.qos2.recovery/client",
+        "${kafka}/publish.qos2.recovery.fragmented.offsets/server"})
+    public void shouldSendMessageQos2DuringRecoveryWithFragmentedOffsets() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Configuration("proxy.yaml")
+    @Configure(name = WILL_AVAILABLE_NAME, value = "false")
+    @Specification({
         "${mqtt}/publish.qos2.abort/client",
         "${kafka}/publish.qos2.meta.abort/server"})
     public void shouldSessionReceiveQos2MetaSentAbort() throws Exception
