@@ -48,6 +48,15 @@ public class SubscribeIT
 
     @Test
     @Specification({
+        "${net}/subscribe.ack.unknown.packet.id/client",
+        "${net}/subscribe.ack.unknown.packet.id/server"})
+    public void shouldIgnoreAckForUnknownPacketId() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Specification({
         "${net}/subscribe.receive.message.wildcard/client",
         "${net}/subscribe.receive.message.wildcard/server"})
     public void shouldReceiveOneMessageWithPatternTopic() throws Exception

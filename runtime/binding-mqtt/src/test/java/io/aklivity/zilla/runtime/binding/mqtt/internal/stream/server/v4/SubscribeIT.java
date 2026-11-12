@@ -67,6 +67,16 @@ public class SubscribeIT
     @Test
     @Configuration("server.yaml")
     @Specification({
+        "${net}/subscribe.ack.unknown.packet.id/client",
+        "${app}/session.connect/server"})
+    public void shouldIgnoreAckForUnknownPacketId() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Configuration("server.yaml")
+    @Specification({
         "${net}/subscribe.topic.filter.single.exact/client",
         "${app}/subscribe.topic.filter.single.exact/server"})
     public void shouldFilterExact() throws Exception

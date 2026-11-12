@@ -69,6 +69,16 @@ public class SubscribeIT
     @Test
     @Configuration("server.yaml")
     @Specification({
+        "${net}/subscribe.ack.unknown.packet.id/client",
+        "${app}/session.connect/server"})
+    public void shouldIgnoreAckForUnknownPacketId() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Configuration("server.yaml")
+    @Specification({
         "${net}/subscribe.one.message.receive.response.topic.and.correlation.data/client",
         "${app}/subscribe.one.message.receive.response.topic.and.correlation.data/server"})
     public void shouldReceiveCorrelationData() throws Exception

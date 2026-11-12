@@ -48,6 +48,15 @@ public class SubscribeIT
 
     @Test
     @Specification({
+        "${net}/subscribe.ack.unknown.packet.id/client",
+        "${net}/subscribe.ack.unknown.packet.id/server"})
+    public void shouldIgnoreAckForUnknownPacketId() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Specification({
         "${net}/subscribe.one.message.user.properties.unaltered/client",
         "${net}/subscribe.one.message.user.properties.unaltered/server"})
     public void shouldReceiveOneMessageWithUserPropertiesUnaltered() throws Exception

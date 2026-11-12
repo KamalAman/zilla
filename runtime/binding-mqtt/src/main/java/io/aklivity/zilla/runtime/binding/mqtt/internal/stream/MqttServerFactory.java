@@ -3853,8 +3853,11 @@ public final class MqttServerFactory implements MqttStreamFactory
             int packetId)
         {
             MqttSubscribeStream stream = qos1Subscribes.remove(packetId);
-            stream.doSubscribeWindow(traceId, encodeSlotOffset, encodeBudgetMax);
-            stream.doSubscribeFlush(traceId, 0, MqttQoS.AT_LEAST_ONCE.ordinal(), packetId);
+            if (stream != null)
+            {
+                stream.doSubscribeWindow(traceId, encodeSlotOffset, encodeBudgetMax);
+                stream.doSubscribeFlush(traceId, 0, MqttQoS.AT_LEAST_ONCE.ordinal(), packetId);
+            }
             doSignalKeepAliveTimeout(traceId);
         }
         private void onDecodePubrec(
@@ -3865,8 +3868,11 @@ public final class MqttServerFactory implements MqttStreamFactory
             int limit,
             int packetId)
         {
-            qos2Subscribes.get(packetId)
-                .doSubscribeFlush(traceId, 0, MqttQoS.EXACTLY_ONCE.ordinal(), packetId, QOS2_INCOMPLETE_OFFSET_STATE);
+            MqttSubscribeStream stream = qos2Subscribes.get(packetId);
+            if (stream != null)
+            {
+                stream.doSubscribeFlush(traceId, 0, MqttQoS.EXACTLY_ONCE.ordinal(), packetId, QOS2_INCOMPLETE_OFFSET_STATE);
+            }
             doSignalKeepAliveTimeout(traceId);
         }
 
@@ -3891,8 +3897,11 @@ public final class MqttServerFactory implements MqttStreamFactory
             int packetId)
         {
             MqttSubscribeStream stream = qos2Subscribes.remove(packetId);
-            stream.doSubscribeWindow(traceId, encodeSlotOffset, encodeBudgetMax);
-            stream.doSubscribeFlush(traceId, 0, MqttQoS.EXACTLY_ONCE.ordinal(), packetId, QOS2_COMPLETE_OFFSET_STATE);
+            if (stream != null)
+            {
+                stream.doSubscribeWindow(traceId, encodeSlotOffset, encodeBudgetMax);
+                stream.doSubscribeFlush(traceId, 0, MqttQoS.EXACTLY_ONCE.ordinal(), packetId, QOS2_COMPLETE_OFFSET_STATE);
+            }
             doSignalKeepAliveTimeout(traceId);
         }
 
