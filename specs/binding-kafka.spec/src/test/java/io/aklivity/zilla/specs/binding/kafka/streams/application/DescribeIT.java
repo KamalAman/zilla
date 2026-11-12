@@ -111,4 +111,13 @@ public class DescribeIT
     {
         k3po.finish();
     }
+
+    @Test
+    @Specification({
+        "${app}/topic.config.info.concurrent/client",
+        "${app}/topic.config.info.concurrent/server"})
+    public void shouldReceiveTopicConfigInfoConcurrent() throws Exception
+    {
+        k3po.finish();
+    }
 }

@@ -114,4 +114,14 @@ public class ClientDescribeIT
         k3po.notifyBarrier("CHANGE_TOPIC_CONFIG");
         k3po.finish();
     }
+
+    @Test
+    @Configuration("client.yaml")
+    @Specification({
+        "${app}/topic.config.info.concurrent/client",
+        "${net}/topic.config.info.concurrent.split/server"})
+    public void shouldReceiveTopicConfigInfoConcurrentWithSplitResponse() throws Exception
+    {
+        k3po.finish();
+    }
 }
