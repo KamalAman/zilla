@@ -328,6 +328,15 @@ public class PublishIT
 
     @Test
     @Specification({
+        "${app}/publish.split.header.after.full.window/client",
+        "${app}/publish.split.header.after.full.window/server"})
+    public void shouldPublishWhenHeaderSplitAfterFullWindow() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Specification({
         "${app}/publish.reject.large.message/client",
         "${app}/publish.reject.large.message/server"})
     public void shouldRejectLargeMessage() throws Exception

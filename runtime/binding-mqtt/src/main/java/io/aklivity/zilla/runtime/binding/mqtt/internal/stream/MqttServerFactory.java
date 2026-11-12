@@ -1310,7 +1310,13 @@ public final class MqttServerFactory implements MqttStreamFactory
             if (qos > 0)
             {
                 final MqttPublishQosV4FW publish =
-                    mqttPublishQosV4RO.tryWrap(buffer, offset, offset + server.decodeablePacketBytes);
+                    mqttPublishQosV4RO.tryWrap(buffer, offset, Math.min(limit, offset + server.decodeablePacketBytes));
+                if (publish == null && limit < offset + server.decodeablePacketBytes)
+                {
+                    // the packet decoder hands over a partial packet when the network window is
+                    // exhausted, so the variable header can still be incomplete: wait for the rest
+                    break decode;
+                }
                 if (publish == null)
                 {
                     reasonCode = PROTOCOL_ERROR;
@@ -1325,8 +1331,14 @@ public final class MqttServerFactory implements MqttStreamFactory
             }
             else
             {
-                final MqttPublishV4FW publish = mqttPublishV4RO
-                    .tryWrap(buffer, offset, offset + server.decodeablePacketBytes);
+                final MqttPublishV4FW publish =
+                    mqttPublishV4RO.tryWrap(buffer, offset, Math.min(limit, offset + server.decodeablePacketBytes));
+                if (publish == null && limit < offset + server.decodeablePacketBytes)
+                {
+                    // the packet decoder hands over a partial packet when the network window is
+                    // exhausted, so the variable header can still be incomplete: wait for the rest
+                    break decode;
+                }
                 if (publish == null)
                 {
                     reasonCode = PROTOCOL_ERROR;
@@ -1425,7 +1437,13 @@ public final class MqttServerFactory implements MqttStreamFactory
             if (qos > 0)
             {
                 final MqttPublishQosV5FW publish =
-                    mqttPublishQosV5RO.tryWrap(buffer, offset, offset + server.decodeablePacketBytes);
+                    mqttPublishQosV5RO.tryWrap(buffer, offset, Math.min(limit, offset + server.decodeablePacketBytes));
+                if (publish == null && limit < offset + server.decodeablePacketBytes)
+                {
+                    // the packet decoder hands over a partial packet when the network window is
+                    // exhausted, so the variable header can still be incomplete: wait for the rest
+                    break decode;
+                }
                 if (publish == null)
                 {
                     reasonCode = PROTOCOL_ERROR;
@@ -1441,8 +1459,14 @@ public final class MqttServerFactory implements MqttStreamFactory
             }
             else
             {
-                final MqttPublishV5FW publish = mqttPublishV5RO
-                    .tryWrap(buffer, offset, offset + server.decodeablePacketBytes);
+                final MqttPublishV5FW publish =
+                    mqttPublishV5RO.tryWrap(buffer, offset, Math.min(limit, offset + server.decodeablePacketBytes));
+                if (publish == null && limit < offset + server.decodeablePacketBytes)
+                {
+                    // the packet decoder hands over a partial packet when the network window is
+                    // exhausted, so the variable header can still be incomplete: wait for the rest
+                    break decode;
+                }
                 if (publish == null)
                 {
                     reasonCode = PROTOCOL_ERROR;

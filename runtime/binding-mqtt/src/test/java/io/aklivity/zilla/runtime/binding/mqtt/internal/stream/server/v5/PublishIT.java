@@ -558,6 +558,17 @@ public class PublishIT
     @Test
     @Configuration("server.yaml")
     @Specification({
+        "${net}/publish.split.header.after.full.window/client",
+        "${app}/publish.split.header.after.full.window/server"})
+    @Configure(name = ENGINE_BUFFER_SLOT_CAPACITY_NAME, value = "8192")
+    public void shouldPublishWhenHeaderSplitAfterFullWindow() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Configuration("server.yaml")
+    @Specification({
         "${net}/publish.reject.large.message/client",
         "${app}/publish.reject.large.message/server"})
     public void shouldRejectLargeMessage() throws Exception

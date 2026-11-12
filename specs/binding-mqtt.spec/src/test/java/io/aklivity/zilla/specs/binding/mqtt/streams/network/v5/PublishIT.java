@@ -475,6 +475,15 @@ public class PublishIT
 
     @Test
     @Specification({
+        "${net}/publish.split.header.after.full.window/client",
+        "${net}/publish.split.header.after.full.window/server"})
+    public void shouldPublishWhenHeaderSplitAfterFullWindow() throws Exception
+    {
+        k3po.finish();
+    }
+
+    @Test
+    @Specification({
         "${net}/publish.reject.large.message/client",
         "${net}/publish.reject.large.message/server"})
     public void shouldRejectLargeMessage() throws Exception
