@@ -311,8 +311,9 @@ public final class KafkaCachePartition
         }
         else
         {
-            final int logRequired = entryInfo.capacity() + key.sizeof() + valueInfo.capacity() +
-                    Math.max(valueLength, 0) + SIZEOF_PADDING_LENGTH + valuePaddingMax + headersSizeMax;
+            final int logRequired = entryInfo.capacity() + key.sizeof() + SIZEOF_PADDING_LENGTH + valueInfo.capacity() +
+                    Math.max(valueLength, 0) + SIZEOF_PADDING_LENGTH + valuePaddingMax + headersSizeMax +
+                    SIZEOF_EMPTY_TRAILERS + SIZEOF_PADDING_LENGTH;
             final int hashKeyRequired = key.length() != -1 ? 1 : 0;
             final int hashHeaderRequiredMax = headersSizeMax >> 2;
             final int hashRequiredMax = (hashKeyRequired + hashHeaderRequiredMax) * SIZEOF_INDEX_RECORD;

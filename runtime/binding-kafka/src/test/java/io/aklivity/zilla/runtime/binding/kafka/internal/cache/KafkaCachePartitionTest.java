@@ -280,6 +280,47 @@ public class KafkaCachePartitionTest
     }
 
     @Test
+    public void shouldRollSegmentWhenEntryTrailersAndPaddingDoNotFit() throws Exception
+    {
+        MutableDirectBufferEx buffer = new UnsafeBufferEx(new byte[1024]);
+        KafkaKeyFW key = key(buffer, "k1");
+        Array32FW<KafkaHeaderFW> headers = noHeaders(buffer, key.limit());
+        OctetsFW value = value(buffer, headers.limit(), "hello");
+
+        KafkaCachePartition sizing = newPartition();
+        Node sized = sizing.append(10L);
+        writeFetchEntry(sizing, 11L, key, headers, value);
+        final int entryBytes = sized.segment().logFile().capacity();
+
+        Path location = tempFolder.newFolder().toPath();
+        KafkaCacheTopicConfig config = new KafkaCacheTopicConfig(new KafkaConfiguration());
+        config.segmentBytes = 2 * entryBytes - 1;
+        KafkaCachePartition partition = new KafkaCachePartition(location, config, "cache", "test", 0, 65536, long[]::new);
+
+        Node first = partition.append(10L);
+        writeFetchEntry(partition, 11L, key, headers, value);
+        Node second = partition.newHeadIfNecessary(12L, key, value.sizeof(), 0, headers.sizeof());
+
+        assertNotSame(first, second);
+        writeFetchEntry(partition, 12L, key, headers, value);
+        KafkaCacheEntryFW entry = second.segment().logFile().readBytes(0, entryRO::wrap);
+        assertArrayEquals("hello".getBytes(UTF_8), bytes(entry.paddedValue().value()));
+        assertEquals(0, entry.trailers().fieldCount());
+    }
+
+    private static void writeFetchEntry(
+        KafkaCachePartition partition,
+        long offset,
+        KafkaKeyFW key,
+        Array32FW<KafkaHeaderFW> headers,
+        OctetsFW value)
+    {
+        partition.writeEntry(null, 1L, 1L, 0L, offset, new MutableInteger(0), new MutableInteger(0), 0L,
+            KafkaTimestampType.ADVISORY, -1L, key, headers, value, 0x00, KafkaDeltaType.NONE, KafkaCacheModel.NONE,
+            KafkaCacheModel.NONE, new KafkaCacheKeyEnvelope(), new KafkaCacheTrailerEnvelope(), 256, false);
+    }
+
+    @Test
     public void shouldStreamTransformedValueDirectlyIntoLogFileForProduce() throws Exception
     {
         KafkaCachePartition partition = newPartition();
